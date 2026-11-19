@@ -1,0 +1,18 @@
+# Pipeline core
+workflow-aggregator
+pipeline-stage-view
+pipeline-graph-view
+# Source control / GitHub (webhooks + polling)
+git
+github
+# Security & credentials
+credentials
+credentials-binding
+plain-credentials
+# Config-as-code & job seeding
+configuration-as-code
+job-dsl
+# Test reporting & housekeeping
+junit
+timestamper
+ws-cleanup

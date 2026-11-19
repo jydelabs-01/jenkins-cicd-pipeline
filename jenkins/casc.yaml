@@ -1,0 +1,75 @@
+# Jenkins Configuration-as-Code. ${VARS} are read from the container environment (.env file),
+# so no secret is ever committed to Git.
+jenkins:
+  systemMessage: "fee-service CI/CD - configured by JCasC"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: true
+
+unclassified:
+  location:
+    url: "${JENKINS_URL:-http://localhost:8080/}"
+
+tool:
+  jdk:
+    installations:
+      - name: "JDK-17"
+        home: "/opt/java/openjdk"
+  maven:
+    installations:
+      - name: "Maven-3"
+        home: "/usr/share/maven"
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # GitHub Personal Access Token used to clone the repo
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-pat"
+              description: "GitHub PAT for cloning fee-service"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+          # Secret consumed by the Deploy stage via withCredentials (masked in logs)
+          - string:
+              scope: GLOBAL
+              id: "test-env-deploy-token"
+              description: "Deploy token for the simulated test environment"
+              secret: "${TEST_DEPLOY_TOKEN}"
+
+# Seed the pipeline job so Jenkins is fully reproducible from code
+jobs:
+  - script: >
+      pipelineJob('fee-service-pipeline') {
+        description('Build, test, package and deploy fee-service. Pipeline defined in the repo Jenkinsfile.')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${APP_REPO_URL}')
+                  credentials('github-pat')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }

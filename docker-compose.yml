@@ -1,0 +1,15 @@
+services:
+  jenkins:
+    build: ./jenkins
+    image: fee-service-jenkins:lts
+    container_name: jenkins
+    env_file: .env            # secrets live here - .env is git-ignored
+    ports:
+      - "8080:8080"           # Jenkins UI
+      - "8085:8085"           # fee-service deployed to the "test environment"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
